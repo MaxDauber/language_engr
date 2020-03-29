@@ -98,10 +98,14 @@ class Parser:
             The list of valid moves for the specified parser
                 configuration.
         """
+        global SH, RA, LA
         moves = []
-
-        # YOUR CODE HERE
-        
+        if (i + 1) < len(pred_tree):
+            moves.append(SH)
+        if len(stack) >= 1:
+            moves.append(LA)
+        if len(stack) >= 2:
+            moves.append(RA)
         return moves
 
         
@@ -121,8 +125,6 @@ class Parser:
             containing the index of the new first unprocessed word,
             stack, and partial dependency tree.
         """
-
-        # YOUR CODE HERE
 
         return i, stack, pred_tree
 
