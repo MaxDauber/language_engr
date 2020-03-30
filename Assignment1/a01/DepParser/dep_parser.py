@@ -102,10 +102,10 @@ class Parser:
         moves = []
         if (i + 1) < len(pred_tree):
             moves.append(SH)
-        if len(stack) >= 1:
-            moves.append(LA)
-        if len(stack) >= 2:
+        if len(stack) <= 2:
             moves.append(RA)
+        if len(stack) <= 1:
+            moves.append(LA)
         return moves
 
         
@@ -126,6 +126,13 @@ class Parser:
             stack, and partial dependency tree.
         """
 
+        global SH, RA, LA
+        if move == SH:
+            stack.append(i)
+        elif move == RA:
+            pred_tree[stack[-2]] = stack.pop()
+        elif move == LA:
+            pred_tree[i] = stack.pop()
         return i, stack, pred_tree
 
 
