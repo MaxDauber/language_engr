@@ -98,14 +98,13 @@ class Parser:
             The list of valid moves for the specified parser
                 configuration.
         """
-        global SH, RA, LA
         moves = []
-        if (i + 1) < len(pred_tree):
-            moves.append(SH)
-        if len(stack) <= 2:
-            moves.append(RA)
-        if len(stack) <= 1:
-            moves.append(LA)
+        if i < len(pred_tree):
+            moves.append(0)
+        if len(stack) > 2:
+            moves.append(1)
+        if len(stack) > 1:
+            moves.append(2)
         return moves
 
         
@@ -126,13 +125,17 @@ class Parser:
             stack, and partial dependency tree.
         """
 
-        global SH, RA, LA
-        if move == SH:
+        if move == 0:
             stack.append(i)
-        elif move == RA:
-            pred_tree[stack[-2]] = stack.pop()
-        elif move == LA:
-            pred_tree[i] = stack.pop()
+            i += 1
+        elif move == 1 and len(stack) > 2:
+            pred_tree[stack[-2]] = stack[-1]
+            stack.remove(stack[-2])
+
+        elif move == 2 and len(stack) > 1:
+            pred_tree[stack[-1]] = stack[-2]
+            stack.remove(stack[-1])
+
         return i, stack, pred_tree
 
 
@@ -171,9 +174,37 @@ class Parser:
             configuration, or `None` if no move is possible.
         """
         assert len(pred_tree) == len(correct_tree)
+        valid = self.valid_moves(i, stack, pred_tree)
+        if len(stack) > 2 and 1 in valid and correct_tree[stack[-2]] == stack[-1]:
+            return 1
 
-        # YOUR CODE HERE
+        if len(stack) > 1 and 2 in valid and correct_tree[stack[-1]] == stack[-2]:
+            temp_tree = correct_tree[i:]
+            if stack[-1] not in temp_tree:
+                return 2
 
+        if i < len(correct_tree) and 0 in valid:
+            return 0
+
+        #
+        # # terminal position means RA
+        # if len(stack) < 2:
+        #     if i == len(correct_tree):
+        #         return 2
+        #     return 0
+        #
+        # collapses = True
+        # for loc in range(len(stack) - 1, -1,-1):
+        #     if not (correct_tree[stack[loc -2]] == stack[-1] or correct_tree[stack[loc-1]] == stack[-2]):
+        #         collapses = False
+        #         break
+        #
+        # if 1 in valid and correct_tree[stack[-2]] == stack[-1] and not (collapses and i < len(pred_tree)):
+        #     return 1
+        # elif 2 in valid and correct_tree[stack[-1]] == stack[-2] and not (collapses and i < len(pred_tree)):
+        #     return 2
+        # elif 0 in valid:
+        #     return 0
         return None
    
 
