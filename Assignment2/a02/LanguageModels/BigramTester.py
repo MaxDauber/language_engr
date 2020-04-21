@@ -28,7 +28,7 @@ class BigramTester(object):
         self.unigram_count = {}
 
         # The bigram log-probabilities.
-        self.bigram_prob = defaultdict(dict)
+        self.bigram_prob = defaultdict(lambda: defaultdict(float))
 
         # Number of unique words (word forms) in the training corpus.
         self.unique_words = 0
@@ -67,7 +67,23 @@ class BigramTester(object):
         try:
             with codecs.open(filename, 'r', 'utf-8') as f:
                 self.unique_words, self.total_words = map(int, f.readline().strip().split(' '))
-                # YOUR CODE HERE
+
+                first_word = f.readline().strip().split(' ')
+                self.word[int(first_word[0])] = first_word[1]
+                self.index[first_word[1]] = int(first_word[0])
+                self.unigram_count[first_word[1]] = int(first_word[2])
+
+                next_word = f.readline().strip().split(' ')
+                while (int(next_word[0]) > 0):
+                    self.word[int(next_word[0])] = next_word[1]
+                    self.index[next_word[1]] = int(next_word[0])
+                    self.unigram_count[next_word[1]] = int(next_word[2])
+                    next_word = f.readline().strip().split(' ')
+
+                while (int(next_word[0]) >= 0):
+                    self.bigram_prob[int(next_word[0])][int(next_word[1])] = math.exp(float(next_word[2]))
+                    next_word = f.readline().strip().split(' ')
+
                 return True
         except IOError:
             print("Couldn't find bigram probabilities file {}".format(filename))
@@ -75,7 +91,8 @@ class BigramTester(object):
 
 
     def compute_entropy_cumulatively(self, word):
-        # YOUR CODE HERE
+        print(self.bigram_prob.keys())
+
         pass
 
     def process_test_file(self, test_filename):
