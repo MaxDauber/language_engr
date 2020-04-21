@@ -42,7 +42,21 @@ class BigramTrainer(object):
 
         :param token: The current word to be processed.
         """
-        # YOUR CODE HERE
+        self.total_words += 1
+
+        if token not in self.unigram_count:
+            self.unique_words += 1
+            self.word[len(self.index)] = token
+            self.index[token] = len(self.index)
+
+
+        self.unigram_count[token] += 1
+
+        if not self.last_index == len(self.tokens) - 2:
+            self.bigram_count[token][self.tokens[self.last_index + 2]] += 1
+
+        self.last_index += 1
+
 
 
     def stats(self):
@@ -53,6 +67,19 @@ class BigramTrainer(object):
         rows_to_print = []
 
         # YOUR CODE HERE
+        rows_to_print.append(str(self.unique_words) + " " + str(self.total_words))
+
+        for identifier in self.word.keys():
+            rows_to_print.append(str(identifier) + " " + self.word[identifier] + " " +
+                                 str(self.unigram_count[self.word[identifier]]))
+
+        for word in self.index.keys():
+            sum = math.fsum(self.bigram_count[word].values())
+            for pairing in self.bigram_count[word]:
+                rows_to_print.append(str(self.index[word]) + " " + str(self.index[pairing]) + " " +
+                                '{:01.15f}'.format(math.log(self.bigram_count[word][pairing]/sum)))
+
+        rows_to_print.append("-1")
 
         return rows_to_print
 

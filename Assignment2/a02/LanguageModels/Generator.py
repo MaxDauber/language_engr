@@ -3,6 +3,8 @@ import argparse
 import codecs
 from collections import defaultdict
 import random
+import numpy as np
+
 
 """
 This file is part of the computer assignments for the course DD1418/DD2418 Language engineering at KTH.
@@ -25,7 +27,7 @@ class Generator(object) :
         self.unigram_count = {}
 
         # The bigram log-probabilities.
-        self.bigram_prob = defaultdict(dict)
+        self.bigram_prob = defaultdict(lambda: defaultdict(float))
 
         # Number of unique words (word forms) in the training corpus.
         self.unique_words = 0
@@ -64,7 +66,23 @@ class Generator(object) :
         try:
             with codecs.open(filename, 'r', 'utf-8') as f:
                 self.unique_words, self.total_words = map(int, f.readline().strip().split(' '))
-                # REUSE YOUR CODE FROM BigramTester.py here
+
+                first_word = f.readline().strip().split(' ')
+                self.word[int(first_word[0])] = first_word[1]
+                self.index[first_word[1]] = int(first_word[0])
+                self.unigram_count[first_word[1]] = int(first_word[2])
+
+                next_word = f.readline().strip().split(' ')
+                while(int(next_word[0]) > 0):
+                    self.word[int(next_word[0])] = next_word[1]
+                    self.index[next_word[1]] = int(next_word[0])
+                    self.unigram_count[next_word[1]] = int(next_word[2])
+                    next_word = f.readline().strip().split(' ')
+
+                while (int(next_word[0]) >= 0):
+                    self.bigram_prob[int(next_word[0])][int(next_word[1])] = math.exp(float(next_word[2]))
+                    next_word = f.readline().strip().split(' ')
+
                 return True
         except IOError:
             print("Couldn't find bigram probabilities file {}".format(filename))
@@ -76,6 +94,27 @@ class Generator(object) :
         of the language model.
         """ 
         # YOUR CODE HERE
+        if str(w) not in self.index.keys():
+            print("invalid W")
+            pass
+        sentance = [str(w)]
+        for num in range(n):
+
+            if self.index[sentance[-1]] in self.bigram_prob.keys():
+                possible_words = list(self.bigram_prob[self.index[sentance[-1]]].keys())
+                probabilities = self.bigram_prob[self.index[sentance[-1]]].values()
+                generated = np.random.choice(a=possible_words, size=1, p=list(probabilities))[0]
+                generated = self.word[generated]
+
+            # elif no bigram probabilities, do uniform distribution
+            else:
+                generated = np.random.choice(a=list(self.word.keys()), size=1,
+                                p=[1.0 / float(self.unique_words) for i in range(self.unique_words)])[0]
+                generated = self.word[generated]
+
+            sentance.append(generated)
+
+        print(" ".join(sentance))
         pass
 
 
