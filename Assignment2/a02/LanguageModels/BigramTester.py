@@ -89,10 +89,24 @@ class BigramTester(object):
             print("Couldn't find bigram probabilities file {}".format(filename))
             return False
 
-
     def compute_entropy_cumulatively(self, word):
-        print(self.bigram_prob.keys())
+        iter_cross_entropy = -1 / len(self.tokens)
 
+        if word not in self.word.values():
+            bigram_prob = self.lambda3
+        elif self.last_index == -1 or self.tokens[self.last_index] not in self.word.values():
+            bigram_prob = self.lambda2 * self.unigram_count[word]/self.total_words \
+                      + self.lambda3
+        else:
+            bigram_prob = self.lambda1 * self.bigram_prob[self.index[self.tokens[self.last_index]]][self.index[word]] \
+                      + self.lambda2 * self.unigram_count[word]/self.total_words \
+                      + self.lambda3
+
+        iter_cross_entropy *= math.log(bigram_prob)
+
+        self.logProb += iter_cross_entropy
+        self.test_words_processed += 1
+        self.last_index += 1
         pass
 
     def process_test_file(self, test_filename):
@@ -108,9 +122,12 @@ class BigramTester(object):
                 for token in self.tokens:
                     self.compute_entropy_cumulatively(token)
             return True
-        except IOError:
+        except IOError as e:
+            # print(e.errno)
+            # print(e)
             print('Error reading testfile')
             return False
+
 
 
 def main():

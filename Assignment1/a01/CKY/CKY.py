@@ -65,13 +65,24 @@ class CKY :
                     self.unary_rules[word] = word_rules
 
 
-    # Parses the sentence a and computes all the cells in the
+    # Parses the sentence s and computes all the cells in the
     # parse table, and all the backpointers in the table
     def parse(self, s) :
-        self.words = s.split()        
-        #
-        #  YOUR CODE HERE
-        #
+        print(self.binary_rules)
+        self.words = s.split()
+        self.table = [[[] for j in range(len(self.words))] for i in range(len(self.words))]
+        for x in range(0, len(self.words)):
+            self.table[x][x] = self.unary_rules.get(self.words[x])
+            for y in range(x - 1, -1, -1):
+                for k in range(y,x):
+                    for a in self.table[x-1][y]:
+                        for b in self.table[x][y+1]:
+                            for rule in self.binary_rules.get(a):
+                                if rule == b:
+                                    self.table[x][y].append(self.binary_rules.get(a).get(b))
+
+
+
         pass
 
 
@@ -85,9 +96,12 @@ class CKY :
     # Prints all parse trees derivable from cell in row 'row' and
     # column 'column', rooted with the symbol 'symbol'
     def print_trees( self, row, column, symbol ) :
-        #
-        #  YOUR CODE HERE
-        #
+        check = False
+        for node in nodes_back:
+            if node.root == 'S':
+                print(getParseTree(node, 3))
+                print()
+                check = True
         pass
 
 
