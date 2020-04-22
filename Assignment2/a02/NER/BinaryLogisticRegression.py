@@ -78,8 +78,9 @@ class BinaryLogisticRegression(object):
 
         # The method conditionalProb should compute the conditional probability P(label|d), where label is
         # either 1 or 0, and d is the index of the datapoint.
-
-        return self.sigmoid(np.matmul((self.theta).T, datapoint))
+        if label == 1:
+            return self.sigmoid(np.dot(self.theta, self.x[datapoint]))
+        return 1 - self.sigmoid(np.dot(self.theta, self.x[datapoint]))
 
 
     def compute_gradient_for_all(self):
@@ -118,21 +119,19 @@ class BinaryLogisticRegression(object):
         done = False
         iter = 1
         while not done:
-            i = random.randint(0,self.DATAPOINTS-1)
+            i = random.randint(0, self.DATAPOINTS)
             for k in range(self.FEATURES):
-                self.gradient[k] = self.x[i][k] * (self.conditional_prob(1, self.x[i]) - self.y[i])
+                self.gradient[k] = self.x[i][k] * (self.conditional_prob(1, i) - self.y[i])
 
             for k in range(self.FEATURES):
                 self.theta[k] = self.theta[k] - self.LEARNING_RATE * self.gradient[k]
 
             done = all(abs(i) < self.CONVERGENCE_MARGIN for i in self.gradient)
 
-            if iter < 10 or iter % 20:
+            if iter < 10 or iter % 5:
                  self.update_plot("Stochastic", np.sum(np.square(self.gradient)))
             iter += 1
-
         self.classify_datapoints(self.x, self.y)
-        plt.savefig("plots/stochastic_convergence.png")
 
 
     def minibatch_fit(self):
@@ -144,11 +143,15 @@ class BinaryLogisticRegression(object):
         done = False
         iter = 1
         while not done:
+            if(self.MINIBATCH_SIZE < self.DATAPOINTS):
+                minibatch = random.sample(range(0, self.DATAPOINTS), self.MINIBATCH_SIZE)
+            else:
+                minibatch = random.sample(range(0, self.DATAPOINTS), self.DATAPOINTS)
             for k in range(self.FEATURES):
                 self.gradient[k] = 1.0 / self.DATAPOINTS
                 sum = 0
-                for i in range(self.DATAPOINTS):
-                    sum += self.x[i][k] * (self.conditional_prob(1, self.x[i]) - self.y[i])
+                for i in minibatch:
+                    sum += self.x[i][k] * (self.conditional_prob(1, i) - self.y[i])
                 self.gradient[k] *= sum
 
             for k in range(self.FEATURES):
@@ -156,10 +159,9 @@ class BinaryLogisticRegression(object):
 
             done = all(abs(i) < self.CONVERGENCE_MARGIN for i in self.gradient)
 
-            if iter < 10 or iter % 20:
-                self.update_plot("MiniBatch", np.sum(np.square(self.gradient)))
-            iter += 1
 
+            self.update_plot("MiniBatch", np.sum(np.square(self.gradient)))
+            iter += 1
         self.classify_datapoints(self.x, self.y)
 
 
@@ -175,7 +177,7 @@ class BinaryLogisticRegression(object):
                 self.gradient[k] = 1.0/self.DATAPOINTS
                 sum = 0
                 for i in range(self.DATAPOINTS):
-                    sum += self.x[i][k] * (self.conditional_prob(1, self.x[i]) - self.y[i])
+                    sum += self.x[i][k] * (self.conditional_prob(1, i) - self.y[i])
                 self.gradient[k] *= sum
 
             for k in range(self.FEATURES):
@@ -186,7 +188,6 @@ class BinaryLogisticRegression(object):
             if iter < 10 or iter % 20:
                 self.update_plot("Batch", np.sum(np.square(self.gradient)))
             iter += 1
-
         self.classify_datapoints(self.x, self.y)
 
 
