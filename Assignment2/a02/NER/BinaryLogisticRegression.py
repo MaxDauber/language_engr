@@ -76,11 +76,9 @@ class BinaryLogisticRegression(object):
         Computes the conditional probability P(label|datapoint)
         """
 
-        # The method conditionalProb should compute the conditional probability P(label|d), where label is
-        # either 1 or 0, and d is the index of the datapoint.
         if label == 1:
-            return self.sigmoid(np.dot(self.theta, self.x[datapoint]))
-        return 1 - self.sigmoid(np.dot(self.theta, self.x[datapoint]))
+            return self.sigmoid(np.dot(self.x[datapoint], (self.theta).T))
+        return 1 - self.sigmoid(np.dot( self.x[datapoint]), (self.theta).T)
 
 
     def compute_gradient_for_all(self):
@@ -119,7 +117,7 @@ class BinaryLogisticRegression(object):
         done = False
         iter = 1
         while not done:
-            i = random.randint(0, self.DATAPOINTS)
+            i = random.randint(0, self.DATAPOINTS-1)
             for k in range(self.FEATURES):
                 self.gradient[k] = self.x[i][k] * (self.conditional_prob(1, i) - self.y[i])
 
@@ -129,9 +127,10 @@ class BinaryLogisticRegression(object):
             done = all(abs(i) < self.CONVERGENCE_MARGIN for i in self.gradient)
 
             if iter < 10 or iter % 5:
-                 self.update_plot("Stochastic", np.sum(np.square(self.gradient)))
+                # self.update_plot("Stochastic", np.sum(np.square(self.gradient)))
+                self.update_plot(np.sum(np.square(self.gradient)))
             iter += 1
-        self.classify_datapoints(self.x, self.y)
+        # self.classify_datapoints(self.x, self.y)
 
 
     def minibatch_fit(self):
@@ -159,10 +158,12 @@ class BinaryLogisticRegression(object):
 
             done = all(abs(i) < self.CONVERGENCE_MARGIN for i in self.gradient)
 
+            if iter < 10 or iter % 20:
+                # self.update_plot("MiniBatch", np.sum(np.square(self.gradient)))
+                self.update_plot(np.sum(np.square(self.gradient)))
 
-            self.update_plot("MiniBatch", np.sum(np.square(self.gradient)))
             iter += 1
-        self.classify_datapoints(self.x, self.y)
+        # self.classify_datapoints(self.x, self.y)
 
 
     def fit(self):
@@ -173,6 +174,7 @@ class BinaryLogisticRegression(object):
         done = False
         iter = 1
         while not done:
+            print(self.gradient)
             for k in range(self.FEATURES):
                 self.gradient[k] = 1.0/self.DATAPOINTS
                 sum = 0
@@ -184,11 +186,11 @@ class BinaryLogisticRegression(object):
                 self.theta[k] = self.theta[k] - self.LEARNING_RATE * self.gradient[k]
 
             done = all(abs(i) < self.CONVERGENCE_MARGIN for i in self.gradient)
-
             if iter < 10 or iter % 20:
-                self.update_plot("Batch", np.sum(np.square(self.gradient)))
+                # self.update_plot("Batch", np.sum(np.square(self.gradient)))
+                self.update_plot(np.sum(np.square(self.gradient)))
             iter += 1
-        self.classify_datapoints(self.x, self.y)
+        # self.classify_datapoints(self.x, self.y)
 
 
 
@@ -244,19 +246,22 @@ class BinaryLogisticRegression(object):
             self.i.append(self.i[-1] + 1)
         version = ""
         for index, val in enumerate(args):
-            if index == 0:
-                version = val
-            else:
-                self.val[index].append(val)
-                self.lines[index].set_xdata(self.i)
-                self.lines[index].set_ydata(self.val[index])
+            # if index == 0:
+            #     version = val
+            # else:
+            #     self.val[index].append(val)
+            #     self.lines[index].set_xdata(self.i)
+            #     self.lines[index].set_ydata(self.val[index])
+            self.val[index].append(val)
+            self.lines[index].set_xdata(self.i)
+            self.lines[index].set_ydata(self.val[index])
 
         self.axes.set_xlim(0, max(self.i) * 1.5)
         self.axes.set_ylim(0, max(max(self.val)) * 1.5)
 
         plt.draw()
         plt.pause(1e-20)
-        plt.savefig("plots/" + version + "GD_convergence.png")
+        #plt.savefig("plots/" + version + "GD_convergence.png")
 
 
 
@@ -292,6 +297,12 @@ def main():
     y = [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0]
     b = BinaryLogisticRegression(x, y)
     b.fit()
+    b.print_result()
+    b = BinaryLogisticRegression(x, y)
+    b.stochastic_fit()
+    b.print_result()
+    b = BinaryLogisticRegression(x, y)
+    b.minibatch_fit()
     b.print_result()
 
 
