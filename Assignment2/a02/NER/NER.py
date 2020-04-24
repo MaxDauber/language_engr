@@ -1,7 +1,6 @@
 import argparse
 import sys
 import codecs
-import time
 from BinaryLogisticRegression import BinaryLogisticRegression
 
 """
@@ -55,6 +54,13 @@ class NER(object):
 
     def first_token_in_sentence(self):
            return self.last_token in [None, '.', '!', '?']
+
+    def prefix_name(self):
+           return self.capitalized_token() and self.last_token in ['mr', 'Mr.', 'Mr', 'mrs', 'Mrs.', 'Mrs', 'Mister']
+
+    def full_name(self):
+           return self.capitalized_token() and self.last_token in ['mr', 'Mr.', 'Mr', 'mrs', 'Mrs.', 'Mrs', 'Mister']
+
 
     class FeatureFunction(object):
         def __init__(self, func):
@@ -126,11 +132,14 @@ class NER(object):
 
         self.current_token = None #  The token currently under consideration.
         self.last_token = None #  The token on the preceding line.
+        self.next_token = None
 
         # Here you can add your own features.
         self.features = [
             NER.FeatureFunction(self.capitalized_token),
             NER.FeatureFunction(self.first_token_in_sentence),
+            NER.FeatureFunction(self.full_name),
+            NER.FeatureFunction(self.prefix_name),
         ]
 
         if training_file:
