@@ -96,7 +96,7 @@ class Generator(object) :
         # YOUR CODE HERE
         if str(w) not in self.index.keys():
             print("invalid W")
-            pass
+            return
         sentance = [str(w)]
         for num in range(n):
 
