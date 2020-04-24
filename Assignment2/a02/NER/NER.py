@@ -1,6 +1,7 @@
 import argparse
 import sys
 import codecs
+import time
 from BinaryLogisticRegression import BinaryLogisticRegression
 
 """

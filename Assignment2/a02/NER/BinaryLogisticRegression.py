@@ -1,5 +1,6 @@
 from __future__ import print_function
 import math
+import time
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -77,8 +78,8 @@ class BinaryLogisticRegression(object):
         """
 
         if label == 1:
-            return self.sigmoid(np.dot(self.x[datapoint], (self.theta).T))
-        return 1 - self.sigmoid(np.dot( self.x[datapoint]), (self.theta).T)
+            return self.sigmoid(np.dot(self.x[datapoint], self.theta))
+        return 1 - self.sigmoid(np.dot(self.x[datapoint], self.theta))
 
 
     def compute_gradient_for_all(self):
@@ -142,6 +143,7 @@ class BinaryLogisticRegression(object):
         done = False
         iter = 1
         while not done:
+            print(self.gradient)
             if(self.MINIBATCH_SIZE < self.DATAPOINTS):
                 minibatch = random.sample(range(0, self.DATAPOINTS), self.MINIBATCH_SIZE)
             else:
@@ -163,7 +165,7 @@ class BinaryLogisticRegression(object):
                 self.update_plot(np.sum(np.square(self.gradient)))
 
             iter += 1
-        # self.classify_datapoints(self.x, self.y)
+        self.classify_datapoints(self.x, self.y)
 
 
     def fit(self):
@@ -171,10 +173,10 @@ class BinaryLogisticRegression(object):
         Performs Batch Gradient Descent
         """
         self.init_plot(self.FEATURES)
+
         done = False
         iter = 1
         while not done:
-            print(self.gradient)
             for k in range(self.FEATURES):
                 self.gradient[k] = 1.0/self.DATAPOINTS
                 sum = 0
@@ -186,11 +188,12 @@ class BinaryLogisticRegression(object):
                 self.theta[k] = self.theta[k] - self.LEARNING_RATE * self.gradient[k]
 
             done = all(abs(i) < self.CONVERGENCE_MARGIN for i in self.gradient)
+
             if iter < 10 or iter % 20:
                 # self.update_plot("Batch", np.sum(np.square(self.gradient)))
                 self.update_plot(np.sum(np.square(self.gradient)))
             iter += 1
-        # self.classify_datapoints(self.x, self.y)
+        self.classify_datapoints(self.x, self.y)
 
 
 
@@ -208,11 +211,9 @@ class BinaryLogisticRegression(object):
         print('  '.join('{:d}: {:.4f}'.format(k, self.theta[k]) for k in range(self.FEATURES)))
 
         self.DATAPOINTS = len(test_data)
-
         self.x = np.concatenate((np.ones((self.DATAPOINTS, 1)), np.array(test_data)), axis=1)
         self.y = np.array(test_labels)
         confusion = np.zeros((self.FEATURES, self.FEATURES))
-
         for d in range(self.DATAPOINTS):
             prob = self.conditional_prob(1, d)
             predicted = 1 if prob > .5 else 0
@@ -296,14 +297,20 @@ def main():
     #  Encoding of the correct classes for the training material
     y = [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0]
     b = BinaryLogisticRegression(x, y)
+    start_time = time.time()
     b.fit()
     b.print_result()
+    print("Runtime: %s seconds" % (time.time() - start_time))
     b = BinaryLogisticRegression(x, y)
+    start_time = time.time()
     b.stochastic_fit()
     b.print_result()
+    print("Runtime: %s seconds" % (time.time() - start_time))
     b = BinaryLogisticRegression(x, y)
+    start_time = time.time()
     b.minibatch_fit()
     b.print_result()
+    print("Runtime: %s seconds" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
