@@ -74,8 +74,8 @@ class RandomIndexing(object):
     ## @return     A list of words in a cleaned line
     ##
     def clean_line(self, line):
-        # YOUR CODE HERE
-        return []
+        return line
+        # return ''.join(filter(str.isalpha, line))
 
 
     ##
