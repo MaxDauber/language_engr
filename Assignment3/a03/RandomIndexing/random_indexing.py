@@ -173,7 +173,7 @@ class RandomIndexing(object):
     def create_word_vectors(self):
 
         # generating context vectors
-        self.__cv = { word : [0 for i in range(self.__dim)] for word in self.__vocab }
+        self.__cv = { word : np.array([0 for i in range(self.__dim)]) for word in self.__vocab }
 
         # generating random vectors
         self.__rv = {}
@@ -182,7 +182,7 @@ class RandomIndexing(object):
             rand_vec = random.sample(range(self.__dim), self.__non_zero)
             for idx in rand_vec:
                 vec[idx] = random.choice(self.__non_zero_values)
-            self.__rv[word] = vec
+            self.__rv[word] = np.array(vec)
 
         for fname in self.__sources:
             with open(fname, encoding='utf8', errors='ignore') as f:
@@ -190,18 +190,16 @@ class RandomIndexing(object):
                     arr = line.split()
 
                     for word_idx in range(len(arr)):
-                        diff_vector = [0 for i in range(self.__dim)]
+                        diff_vector = np.array([0 for i in range(self.__dim)])
                         for left_idx in range(self.__lws, 0, -1):
                             if word_idx - left_idx > 0:
-                                diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx - left_idx]])]
+                                # diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx - left_idx]])]
+                                diff_vector += np.array(self.__rv[arr[word_idx - left_idx]])
                         for right_idx in range(1, self.__rws+1):
                             if word_idx + right_idx < len(arr):
-                                diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx + right_idx]])]
-                        self.__cv[arr[word_idx - left_idx]] = \
-                            [sum(x) for x in zip(diff_vector, self.__cv[arr[word_idx - left_idx]])]
-
-
-
+                                # diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx + right_idx]])]
+                                diff_vector += np.array(self.__rv[arr[word_idx + right_idx]])
+                        self.__cv[arr[word_idx]] += diff_vector
         pass
 
 
@@ -234,11 +232,27 @@ class RandomIndexing(object):
     def find_nearest(self, words, k=5, metric='cosine'):
         if not words:
             return [None]
+        input = [self.get_word_vector(word) for word in words if self.get_word_vector(word) is not None]
+        if len(input) == 0:
+            return [None]
+
+        index_mapping = {}
+        samples = []
+        idx = 0
+        for word in self.__vocab:
+            samples.append(self.get_word_vector(word))
+            index_mapping[idx] = word
+            idx += 1
+
+        # create scikit-learn classifier
+        net = NearestNeighbors(metric=metric, n_neighbors=k)
+        net.fit(samples)
+
+
         ret = []
-        n = NearestNeighbors(metric='cosine')
-        n.fit(self.__cv)
-        for word in words:
-            ret.append(n.kneighbors(X=word,n_neighbors=k))
+        distances, indices = net.kneighbors(X=input, return_distance=True)
+        for i in range(0, len(indices)):
+            ret.append([(index_mapping[indices[i][j]], distances[i][j]) for j in range(0, len(indices[i]))])
         return ret
 
 
@@ -326,7 +340,6 @@ class RandomIndexing(object):
     ##
     def train_and_persist(self):
         self.train()
-        print(self.get_word_vector("Harry"))
         print("PRESS q FOR EXIT")
         text = input('> ')
         while text != 'q':
