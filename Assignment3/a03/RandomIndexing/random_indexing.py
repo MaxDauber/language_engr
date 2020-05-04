@@ -1,6 +1,7 @@
 import os
 import argparse
 import time
+import random
 import string
 import numpy as np
 from halo import Halo
@@ -74,8 +75,7 @@ class RandomIndexing(object):
     ## @return     A list of words in a cleaned line
     ##
     def clean_line(self, line):
-        return line
-        # return ''.join(filter(str.isalpha, line))
+        return str(''.join(e for e in line if e.isalpha() or e == " "))
 
 
     ##
@@ -110,7 +110,11 @@ class RandomIndexing(object):
     ##             (using the `text_gen` function)
     ##
     def build_vocabulary(self):
-        # YOUR CODE HERE
+        for fname in self.__sources:
+            with open(fname, encoding='utf8', errors='ignore') as f:
+                for line in f:
+                    for word in line.split():
+                        self.__vocab.add(word)
         self.write_vocabulary()
 
 
@@ -167,7 +171,37 @@ class RandomIndexing(object):
     ##         keeping all the cleaned lines in memory as a gigantic list.
     ##
     def create_word_vectors(self):
-        # YOUR CODE HERE
+
+        # generating context vectors
+        self.__cv = { word : [0 for i in range(self.__dim)] for word in self.__vocab }
+
+        # generating random vectors
+        self.__rv = {}
+        for word in self.__vocab:
+            vec = [0 for i in range(self.__dim)]
+            rand_vec = random.sample(range(self.__dim), self.__non_zero)
+            for idx in rand_vec:
+                vec[idx] = random.choice(self.__non_zero_values)
+            self.__rv[word] = vec
+
+        for fname in self.__sources:
+            with open(fname, encoding='utf8', errors='ignore') as f:
+                for line in f:
+                    arr = line.split()
+
+                    for word_idx in range(len(arr)):
+                        diff_vector = [0 for i in range(self.__dim)]
+                        for left_idx in range(self.__lws, 0, -1):
+                            if word_idx - left_idx > 0:
+                                diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx - left_idx]])]
+                        for right_idx in range(1, self.__rws+1):
+                            if word_idx + right_idx < len(arr):
+                                diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx + right_idx]])]
+                        self.__cv[arr[word_idx - left_idx]] = \
+                            [sum(x) for x in zip(diff_vector, self.__cv[arr[word_idx - left_idx]])]
+
+
+
         pass
 
 
@@ -198,8 +232,14 @@ class RandomIndexing(object):
     ## @return     A list of list of tuples in the format specified in the function description
     ##
     def find_nearest(self, words, k=5, metric='cosine'):
-        # YOUR CODE HERE
-        return [None]
+        if not words:
+            return [None]
+        ret = []
+        n = NearestNeighbors(metric='cosine')
+        n.fit(self.__cv)
+        for word in words:
+            ret.append(n.kneighbors(X=word,n_neighbors=k))
+        return ret
 
 
     ##
@@ -210,7 +250,8 @@ class RandomIndexing(object):
     ## @return     The word vector if the word exists in the vocabulary and None otherwise.
     ##
     def get_word_vector(self, word):
-        # YOUR CODE HERE
+        if word in self.__vocab:
+            return self.__cv[word]
         return None
 
 
@@ -285,6 +326,7 @@ class RandomIndexing(object):
     ##
     def train_and_persist(self):
         self.train()
+        print(self.get_word_vector("Harry"))
         print("PRESS q FOR EXIT")
         text = input('> ')
         while text != 'q':
@@ -310,10 +352,11 @@ if __name__ == '__main__':
         ri = RandomIndexing(['example.txt'])
         with open(args.cleaned_output, 'w') as f:
             for part in ri.text_gen():
-                f.write("{}\n".format(" ".join(part)))
+                f.write("{}\n".format("".join(part)))
     else:
         dir_name = "data"
         filenames = [os.path.join(dir_name, fn) for fn in os.listdir(dir_name)]
 
         ri = RandomIndexing(filenames)
         ri.train_and_persist()
+
