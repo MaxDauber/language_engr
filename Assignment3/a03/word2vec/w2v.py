@@ -5,6 +5,7 @@ import string
 from collections import defaultdict
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+import random
 
 from tqdm import tqdm
 
@@ -42,6 +43,11 @@ class Word2Vec(object):
         self.__nbrs = None
         self.__use_corrected = use_corrected
         self.__use_lr_scheduling = use_lr_scheduling
+        self.__vocab = dict()
+        self.__V = 0
+        self.__corpus_size = 0
+        self.__unigram_probs = dict()
+        self.__corrected_unigram = dict()
 
 
     def init_params(self, W, w2i, i2w):
@@ -64,10 +70,7 @@ class Word2Vec(object):
         :param      line:  The line
         :type       line:  str
         """
-        #
-        # REPLACE WITH YOUR CODE HERE
-        #
-        return []
+        return str(''.join(e for e in line if e.isalpha() or e == " "))
 
 
     def text_gen(self):
@@ -98,10 +101,16 @@ class Word2Vec(object):
         :param      i:     Index of the focus word in the sentence
         :type       i:     int
         """
-        #
-        # REPLACE WITH YOUR CODE
-        # 
-        return []
+        ret = []
+        for left_idx in range(self.__lws, 0, -1):
+            if i - left_idx > 0:
+                ret.append(self.__w2i[sent[i]])
+
+        for right_idx in range(1, self.__rws + 1):
+            if i + right_idx < len(sent):
+                ret.append(self.__w2i[sent[i]])
+
+        return ret
 
 
     def skipgram_data(self):
@@ -114,10 +123,38 @@ class Word2Vec(object):
             a) list of focus words
             b) list of respective context words
         """
-        #
-        # REPLACE WITH YOUR CODE
-        # 
-        return [], []
+        # build voacabulary
+        for line in self.text_gen():
+            for word in line:
+                if word not in self.__vocab:
+                    self.__vocab[word] = 1
+                    self.__V += 1
+                else:
+                    self.__vocab[word] += 1
+                self.__corpus_size += 1
+
+
+        # build maps
+        words = list(self.__vocab)
+        self.__w2i = {words[idx] : idx for idx in range(self.__V)}
+        self.__i2w = {idx : words[idx] for idx in range(self.__V)}
+
+        # calculate unigram distributions
+        corrected_sum = 0
+        for word in self.__vocab.keys():
+            self.__unigram_probs[word] = float(self.__vocab[word] / self.__corpus_size)
+            corrected_sum += pow(self.__unigram_probs[word], 0.75)
+        for word in self.__vocab.keys():
+            self.__corrected_unigram[word] = float(pow(self.__unigram_probs[word], 0.75) / corrected_sum)
+
+        focus = []
+        context = []
+        for line in self.text_gen():
+            for idx in range(len(line)):
+                focus.append(self.__w2i[line[idx]])
+                context.append(self.get_context(line, idx))
+
+        return focus, context
 
 
     def sigmoid(self, x):
