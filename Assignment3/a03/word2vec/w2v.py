@@ -48,6 +48,8 @@ class Word2Vec(object):
         self.__corpus_size = 0
         self.__unigram_probs = dict()
         self.__corrected_unigram = dict()
+        self.__neg_samples = set()
+        self.__pos_samples = set()
 
 
     def init_params(self, W, w2i, i2w):
@@ -176,10 +178,19 @@ class Word2Vec(object):
         :param      pos:        The index of the current positive example
         :type       pos:        int
         """
-        #
-        # REPLACE WITH YOUR CODE
-        #
-        return []
+        neg_samples = []
+        for count in range(number):
+            random_neg = random.choices(population=list(self.__corrected_unigram.keys()),
+                                        weights=list(self.__corrected_unigram.values()),
+                                        k=1)
+            while random_neg in self.__neg_samples or random_neg in self.__pos_samples:
+                random_neg = random.choices(population=list(self.__corrected_unigram.keys()),
+                                            weights=list(self.__corrected_unigram.values()),
+                                            k=1)
+            neg_samples.append(random_neg)
+            self.__neg_samples.add(random_neg)
+
+        return neg_samples
 
 
     def train(self):
@@ -191,14 +202,48 @@ class Word2Vec(object):
         print("Dataset contains {} datapoints".format(N))
 
         # REPLACE WITH YOUR RANDOM INITIALIZATION
-        self.__W = np.zeros((100, 50))
-        self.__U = np.zeros((100, 50))
+        self.__W = np.zeros((self.__V,  self.__H))
+        self.__U = np.zeros((self.__H,  self.__V))
 
         for ep in range(self.__epochs):
             for i in tqdm(range(N)):
-                #
-                # YOUR CODE HERE 
-                #
+                focus_word = np.array(x[i])
+                context_vector = np.array(t[i])
+
+                # add all to positive samples
+                for vec in context_vector:
+                    self.__pos_samples.add(self.__i2w[vec])
+                self.__pos_samples.add(self.__i2w[x[i]])
+
+                focus_sum = np.zeros((self.__H, ))
+
+                for idx in context_vector:
+                    #calculate gradient for context
+                    gradient_context = self.__W[focus_word] * \
+                                       (self.sigmoid(np.dot(self.__U[:, idx], self.__W[focus_word]))-1)
+                    #calculate gradient for focus
+                    gradient_focus = self.__U[:, idx] * \
+                                       (self.sigmoid(np.dot(self.__U[:, idx], self.__W[focus_word]))-1)
+
+                    # update focus gradient sum
+                    focus_sum += gradient_focus
+
+                    # update vector
+                    self.__U[:, idx] -= self.__lr * gradient_context
+
+                    for neg in self.negative_sampling(self.__nsample, i, idx):
+                        neg_index = self.__w2i[neg]
+                        gradient_neg = self.__W[focus_word] * \
+                                       (1- self.sigmoid(np.dot((-1 * self.__U[:, neg_index]), self.__W[focus_word])))
+
+                        self.__U[:, idx] -= self.__lr * gradient_neg
+
+                        gradient_focus_neg = self.__U[:, neg_index] * \
+                                         (self.sigmoid(np.dot(self.__U[:, neg_index], self.__W[focus_word])))
+
+                        focus_sum += gradient_focus_neg
+
+
                 pass
 
 
