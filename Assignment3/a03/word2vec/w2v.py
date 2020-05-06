@@ -72,7 +72,13 @@ class Word2Vec(object):
         :param      line:  The line
         :type       line:  str
         """
-        return str(''.join(e for e in line if e.isalpha() or e == " "))
+        array = line.split()
+        ret = []
+        for token in array:
+            token = str([ch for ch in token if ch.isalpha()])
+            if token != "":
+                ret.append(token)
+        return ret
 
 
     def text_gen(self):
@@ -190,7 +196,7 @@ class Word2Vec(object):
             neg_samples.append(random_neg)
             self.__neg_samples.add(random_neg)
 
-        return neg_samples
+        return set(neg_samples)
 
 
     def train(self):
