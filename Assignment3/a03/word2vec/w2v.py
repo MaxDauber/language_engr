@@ -207,20 +207,23 @@ class Word2Vec(object):
         print("Dataset contains {} datapoints".format(N))
 
         # REPLACE WITH YOUR RANDOM INITIALIZATION
-        self.__W = np.zeros((self.__V,  self.__H))
-        self.__U = np.zeros((self.__H,  self.__V))
+        # self.__W = np.zeros((self.__V, self.__H))
+        # self.__U = np.zeros((self.__H, self.__V))
+        self.__W = np.random.randn(self.__V, self.__H)
+        self.__U = np.random.randn(self.__H, self.__V)
 
         for ep in range(self.__epochs):
             for i in tqdm(range(N)):
 
                 focus_word = x[i]
                 context_vector = np.array(t[i])
+                # print(self.__i2w[focus_word])
+                # print([self.__i2w[word] for word in context_vector])
 
                 # add all to positive samples
                 for vec in context_vector:
                     self.__pos_samples.add(self.__i2w[vec])
                 self.__pos_samples.add(self.__i2w[x[i]])
-
                 focus_sum = np.zeros((self.__H, ))
 
                 for idx in context_vector:
@@ -238,7 +241,9 @@ class Word2Vec(object):
                     # update vector
                     self.__U[:, idx] -= self.__lr * gradient_context
 
-                    for neg in self.negative_sampling(self.__nsample, i, idx):
+                    negs = self.negative_sampling(self.__nsample, i, idx)
+                    for neg in negs:
+
                         neg_index = self.__w2i[neg]
                         gradient_neg = self.__W[focus_word] * \
                                        (1- self.sigmoid(np.dot((-1 * self.__U[:, neg_index]), self.__W[focus_word])))
@@ -250,7 +255,7 @@ class Word2Vec(object):
 
                         focus_sum += gradient_focus_neg
 
-                    
+                self.__W[focus_word] -= self.__lr * focus_sum
                 pass
 
 
@@ -303,7 +308,6 @@ class Word2Vec(object):
         for i in range(0, len(indices)):
             ret.append([(index_mapping[indices[i][j]], distances[i][j]) for j in range(0, len(indices[i]))])
         return ret
-        return []
 
 
     def write_to_file(self):
