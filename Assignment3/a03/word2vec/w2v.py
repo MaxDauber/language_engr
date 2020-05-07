@@ -75,7 +75,7 @@ class Word2Vec(object):
         array = line.split()
         ret = []
         for token in array:
-            token = str([ch for ch in token if ch.isalpha()])
+            token = ''.join([ch for ch in token if ch.isalpha()])
             if token != "":
                 ret.append(token)
         return ret
@@ -112,11 +112,11 @@ class Word2Vec(object):
         ret = []
         for left_idx in range(self.__lws, 0, -1):
             if i - left_idx > 0:
-                ret.append(self.__w2i[sent[i]])
+                ret.append(self.__w2i[sent[left_idx]])
 
         for right_idx in range(1, self.__rws + 1):
             if i + right_idx < len(sent):
-                ret.append(self.__w2i[sent[i]])
+                ret.append(self.__w2i[sent[right_idx]])
 
         return ret
 
@@ -184,19 +184,18 @@ class Word2Vec(object):
         :param      pos:        The index of the current positive example
         :type       pos:        int
         """
-        neg_samples = []
+        neg_samples = set()
         for count in range(number):
             random_neg = random.choices(population=list(self.__corrected_unigram.keys()),
                                         weights=list(self.__corrected_unigram.values()),
-                                        k=1)
-            while random_neg in self.__neg_samples or random_neg in self.__pos_samples:
+                                        k=1)[0]
+
+            while random_neg in neg_samples or random_neg in self.__pos_samples:
                 random_neg = random.choices(population=list(self.__corrected_unigram.keys()),
                                             weights=list(self.__corrected_unigram.values()),
-                                            k=1)
-            neg_samples.append(random_neg)
-            self.__neg_samples.add(random_neg)
-
-        return set(neg_samples)
+                                            k=1)[0]
+            neg_samples.add(random_neg)
+        return neg_samples
 
 
     def train(self):
@@ -213,7 +212,8 @@ class Word2Vec(object):
 
         for ep in range(self.__epochs):
             for i in tqdm(range(N)):
-                focus_word = np.array(x[i])
+
+                focus_word = x[i]
                 context_vector = np.array(t[i])
 
                 # add all to positive samples
@@ -227,6 +227,7 @@ class Word2Vec(object):
                     #calculate gradient for context
                     gradient_context = self.__W[focus_word] * \
                                        (self.sigmoid(np.dot(self.__U[:, idx], self.__W[focus_word]))-1)
+
                     #calculate gradient for focus
                     gradient_focus = self.__U[:, idx] * \
                                        (self.sigmoid(np.dot(self.__U[:, idx], self.__W[focus_word]))-1)
@@ -249,7 +250,7 @@ class Word2Vec(object):
 
                         focus_sum += gradient_focus_neg
 
-
+                    
                 pass
 
 
@@ -279,9 +280,29 @@ class Word2Vec(object):
         :param      metric:  The similarity/distance metric
         :type       metric:  string
         """
-        #
-        # REPLACE WITH YOUR CODE
-        #
+        if not words:
+            return [None]
+        input = [self.get_context(word) for word in words if self.get_context(word) is not None]
+        if len(input) == 0:
+            return [None]
+
+        index_mapping = {}
+        samples = []
+        idx = 0
+        for word in self.__vocab:
+            samples.append(self.get_context(word))
+            index_mapping[idx] = word
+            idx += 1
+
+        # create scikit-learn classifier
+        net = NearestNeighbors(metric=metric, n_neighbors=k)
+        net.fit(samples)
+
+        ret = []
+        distances, indices = net.kneighbors(X=input, return_distance=True)
+        for i in range(0, len(indices)):
+            ret.append([(index_mapping[indices[i][j]], distances[i][j]) for j in range(0, len(indices[i]))])
+        return ret
         return []
 
 

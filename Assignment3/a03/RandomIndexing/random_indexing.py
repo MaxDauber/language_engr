@@ -75,7 +75,14 @@ class RandomIndexing(object):
     ## @return     A list of words in a cleaned line
     ##
     def clean_line(self, line):
-        return str(''.join(e for e in line if e.isalpha() or e == " "))
+        array = line.split()
+        ret = []
+        for token in array:
+            token = str([ch for ch in token if ch.isalpha()])
+            if token != "":
+                ret.append(token)
+        return ret
+        # return str(''.join(e for e in line if e.isalpha() or e == " "))
 
 
     ##
