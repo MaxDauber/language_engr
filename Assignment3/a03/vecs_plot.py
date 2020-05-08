@@ -1,9 +1,8 @@
 import argparse
+
 import matplotlib.pyplot as plt
-from sklearn.decomposition import TruncatedSVD, PCA
-from word2vec import Word2Vec
-from RandomIndexing import RandomIndexing
 import numpy as np
+from sklearn.decomposition import TruncatedSVD, PCA
 
 
 def draw_interactive(x, y, text):
@@ -82,17 +81,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     W, i2w, w2i, V, H = load(args.file)
-
-    if args.decomposition == 'svd':
-        svd = TruncatedSVD(n_components=2)
-        svd.fit(X)
-    elif args.decomposition == 'pca':
-
-
-
     x = []
     y = []
-    text = []
+    text = list(w2i.keys())
+
+    if args.decomposition == 'svd':
+        svd = TruncatedSVD(n_components=2, random_state=42)
+        svd.fit_transform(W)
+        x = svd.components_[0]
+        y = svd.components_[1]
+    elif args.decomposition == 'pca':
+        pca = PCA(n_components=2, random_state=17)
+        pca.fit_transform(W)
+        x = pca.components_[0]
+        y = pca.components_[1]
+
+
     draw_interactive(x,y,text)
 
 

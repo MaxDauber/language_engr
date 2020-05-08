@@ -61,7 +61,7 @@ class RandomIndexing(object):
         self.__rws = right_window_size
         self.__cv = None
         self.__rv = None
-        
+
 
     ##
     ## @brief      A function cleaning the line from punctuation and digits
@@ -330,7 +330,7 @@ class RandomIndexing(object):
         with open("ri.txt", 'w') as f:
             f.write("{} {}\n".format(len(self.__vocab), self.__dim))
             for i, w in enumerate(self.__i2w):
-                f.write(str(w) + " " + " ".join(map(lambda x: "{0:.6f}".format(x), self.get_word_vector(w))) + "\n")
+                f.write(str(w) + " " + " ".join(map(lambda x: "{0:.6f}".format(x), self.__cv[w])) + "\n")
 
 
     ##

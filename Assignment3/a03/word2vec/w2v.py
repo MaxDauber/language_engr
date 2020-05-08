@@ -330,7 +330,7 @@ class Word2Vec(object):
                 W = self.__W
                 f.write("{} {}\n".format(self.__V, self.__H))
                 for i, w in enumerate(self.__i2w):
-                    f.write(str(w) + " " + " ".join(map(lambda x: "{0:.6f}".format(x), W[i,:])) + "\n")
+                    f.write(str(self.__i2w[w]) + " " + " ".join(map(lambda x: "{0:.6f}".format(x), W[i,:])) + "\n")
         except:
             print("Error: failing to write model to the file")
 
