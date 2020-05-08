@@ -1,3 +1,3 @@
-numpy==1.15.4
-halo==0.0.21
-scikit_learn==0.20.1
+version https://git-lfs.github.com/spec/v1
+oid sha256:574b65ebdfb1235bfe333a5202799a296f1c87aa18d161f91b1b35319957946c
+size 51
