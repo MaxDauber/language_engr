@@ -186,11 +186,15 @@ class Word2Vec(object):
         """
         neg_samples = set()
         for count in range(number):
+            # random_neg = np.random.choice(a=list(self.__corrected_unigram.keys()),
+            #                             p=list(self.__corrected_unigram.values()))
             random_neg = random.choices(population=list(self.__corrected_unigram.keys()),
                                         weights=list(self.__corrected_unigram.values()),
                                         k=1)[0]
 
-            while random_neg in neg_samples or random_neg in self.__pos_samples:
+            while random_neg in self.__pos_samples:
+                # random_neg = np.random.choice(a=list(self.__corrected_unigram.keys()),
+                #                               p=list(self.__corrected_unigram.values()))
                 random_neg = random.choices(population=list(self.__corrected_unigram.keys()),
                                             weights=list(self.__corrected_unigram.values()),
                                             k=1)[0]
@@ -246,7 +250,7 @@ class Word2Vec(object):
 
                         neg_index = self.__w2i[neg]
                         gradient_neg = self.__W[focus_word] * \
-                                       (1- self.sigmoid(np.dot((-1 * self.__U[:, neg_index]), self.__W[focus_word])))
+                                       (1 - self.sigmoid(np.dot((-1 * self.__U[:, neg_index]), self.__W[focus_word])))
 
                         self.__U[:, idx] -= self.__lr * gradient_neg
 
@@ -256,6 +260,7 @@ class Word2Vec(object):
                         focus_sum += gradient_focus_neg
 
                 self.__W[focus_word] -= self.__lr * focus_sum
+                self.__pos_samples.clear()
                 pass
 
 
