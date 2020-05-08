@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import TruncatedSVD, PCA
 from word2vec import Word2Vec
 from RandomIndexing import RandomIndexing
+import numpy as np
 
 
 def draw_interactive(x, y, text):
@@ -52,6 +53,25 @@ def draw_interactive(x, y, text):
     fig.canvas.mpl_connect("motion_notify_event", hover)
     plt.show()
 
+def load(fname):
+    """
+    Load the Model from a file
+    """
+    try:
+        with open(fname, 'r') as f:
+            V, H = (int(a) for a in next(f).split())
+            W, i2w, w2i = np.zeros((V, H)), [], {}
+            for i, line in enumerate(f):
+                parts = line.split()
+                word = parts[0].strip()
+                w2i[word] = i
+                W[i] = list(map(float, parts[1:]))
+                i2w.append(word)
+            return W, i2w, w2i, V, H
+    except:
+        print("Error: failing to load the model to the file")
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='embedding visualization toolkit')
@@ -60,6 +80,14 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--decomposition', default='svd', choices=['svd', 'pca'],
                         help='Your favorite decomposition method')
     args = parser.parse_args()
+
+    W, i2w, w2i, V, H = load(args.file)
+
+    if args.decomposition == 'svd':
+        svd = TruncatedSVD(n_components=2)
+        svd.fit(X)
+    elif args.decomposition == 'pca':
+
 
 
     x = []
