@@ -1,2 +1,2 @@
 #! /bin/sh
-python random_indexing.py
+python random_indexing.py -fv

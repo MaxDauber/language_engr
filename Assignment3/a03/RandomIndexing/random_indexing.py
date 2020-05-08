@@ -78,11 +78,11 @@ class RandomIndexing(object):
         array = line.split()
         ret = []
         for token in array:
-            token = str([ch for ch in token if ch.isalpha()])
+            token = ''.join([ch for ch in list(token) if ch.isalpha()])
             if token != "":
                 ret.append(token)
-        return ret
-        # return str(''.join(e for e in line if e.isalpha() or e == " "))
+        return " ".join(ret)
+        # return [word for word in line if e.isalpha() or e == " "]
 
 
     ##
@@ -120,7 +120,7 @@ class RandomIndexing(object):
         for fname in self.__sources:
             with open(fname, encoding='utf8', errors='ignore') as f:
                 for line in f:
-                    for word in line.split():
+                    for word in self.clean_line(line).split():
                         self.__vocab.add(word)
         self.write_vocabulary()
 
@@ -194,7 +194,7 @@ class RandomIndexing(object):
         for fname in self.__sources:
             with open(fname, encoding='utf8', errors='ignore') as f:
                 for line in f:
-                    arr = line.split()
+                    arr = self.clean_line(line).split()
 
                     for word_idx in range(len(arr)):
                         diff_vector = np.array([0 for i in range(self.__dim)])
@@ -207,6 +207,20 @@ class RandomIndexing(object):
                                 # diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx + right_idx]])]
                                 diff_vector += np.array(self.__rv[arr[word_idx + right_idx]])
                         self.__cv[arr[word_idx]] += diff_vector
+
+        # for line in self.text_gen():
+        #     arr = line.split()
+        #     for word_idx in range(len(arr)):
+        #         diff_vector = np.array([0 for i in range(self.__dim)])
+        #         for left_idx in range(self.__lws, 0, -1):
+        #             if word_idx - left_idx > 0:
+        #                 # diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx - left_idx]])]
+        #                 diff_vector += np.array(self.__rv[arr[word_idx - left_idx]])
+        #         for right_idx in range(1, self.__rws+1):
+        #             if word_idx + right_idx < len(arr):
+        #                 # diff_vector = [sum(x) for x in zip(diff_vector, self.__rv[arr[word_idx + right_idx]])]
+        #                 diff_vector += np.array(self.__rv[arr[word_idx + right_idx]])
+        #         self.__cv[arr[word_idx]] += diff_vector
         pass
 
 
@@ -309,6 +323,15 @@ class RandomIndexing(object):
             for w in self.__vocab:
                 f.write('{}\n'.format(w))
 
+    def write_to_file(self):
+        """
+        Write the model to a file `ri.txt`
+        """
+        with open("ri.txt", 'w') as f:
+            f.write("{} {}\n".format(len(self.__vocab), self.__dim))
+            for i, w in enumerate(self.__i2w):
+                f.write(str(w) + " " + " ".join(map(lambda x: "{0:.6f}".format(x), self.get_word_vector(w))) + "\n")
+
 
     ##
     ## @brief      Main function call to train word embeddings
@@ -347,6 +370,7 @@ class RandomIndexing(object):
     ##
     def train_and_persist(self):
         self.train()
+        self.write_to_file()
         print("PRESS q FOR EXIT")
         text = input('> ')
         while text != 'q':
@@ -375,7 +399,10 @@ if __name__ == '__main__':
                 f.write("{}\n".format("".join(part)))
     else:
         dir_name = "data"
-        filenames = [os.path.join(dir_name, fn) for fn in os.listdir(dir_name)]
+        # filenames = [os.path.join(dir_name, fn) for fn in os.listdir(dir_name)]
+
+        # Use if only training on first book
+        filenames = ["data/Harry Potter 1 - Sorcerer's Stone.txt"]
 
         ri = RandomIndexing(filenames)
         ri.train_and_persist()

@@ -75,10 +75,12 @@ class Word2Vec(object):
         array = line.split()
         ret = []
         for token in array:
-            token = ''.join([ch for ch in token if ch.isalpha()])
+            token = ''.join([ch for ch in list(token) if ch.isalpha()])
+            print(token)
             if token != "":
                 ret.append(token)
         return ret
+
 
 
     def text_gen(self):
@@ -140,6 +142,7 @@ class Word2Vec(object):
                 else:
                     self.__vocab[word] += 1
                 self.__corpus_size += 1
+        print(self.__vocab)
 
 
         # build maps
@@ -292,15 +295,18 @@ class Word2Vec(object):
         """
         if not words:
             return [None]
-        input = [self.get_context(word) for word in words if self.get_context(word) is not None]
+        print(words)
+        print(self.__w2i[words[0]])
+        print(len(self.__W))
+        input = [self.__W[self.__w2i[word]] for word in words]
         if len(input) == 0:
             return [None]
 
         index_mapping = {}
         samples = []
         idx = 0
-        for word in self.__vocab:
-            samples.append(self.get_context(word))
+        for word in self.__vocab.keys():
+            samples.append(self.__W[self.__w2i[word]])
             index_mapping[idx] = word
             idx += 1
 

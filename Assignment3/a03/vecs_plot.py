@@ -61,7 +61,10 @@ if __name__ == '__main__':
                         help='Your favorite decomposition method')
     args = parser.parse_args()
 
-    #
-    # YOUR CODE HERE
-    #
+
+    x = []
+    y = []
+    text = []
+    draw_interactive(x,y,text)
+
 
