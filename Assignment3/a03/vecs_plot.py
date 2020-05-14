@@ -86,12 +86,12 @@ if __name__ == '__main__':
     text = list(w2i.keys())
 
     if args.decomposition == 'svd':
-        svd = TruncatedSVD(n_components=2, random_state=42)
+        svd = TruncatedSVD(n_components=2)
         svd.fit_transform(W)
         x = svd.components_[0]
         y = svd.components_[1]
     elif args.decomposition == 'pca':
-        pca = PCA(n_components=2, random_state=17)
+        pca = PCA(n_components=2)
         pca.fit_transform(W)
         x = pca.components_[0]
         y = pca.components_[1]

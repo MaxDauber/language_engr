@@ -113,7 +113,7 @@ class Word2Vec(object):
         """
         ret = []
         for left_idx in range(self.__lws, 0, -1):
-            if i - left_idx > 0:
+            if i - left_idx >= 0:
                 ret.append(self.__w2i[sent[left_idx]])
 
         for right_idx in range(1, self.__rws + 1):
@@ -216,8 +216,10 @@ class Word2Vec(object):
         # REPLACE WITH YOUR RANDOM INITIALIZATION
         # self.__W = np.zeros((self.__V, self.__H))
         # self.__U = np.zeros((self.__H, self.__V))
-        self.__W = np.random.randn(self.__V, self.__H)
-        self.__U = np.random.randn(self.__H, self.__V)
+        # self.__W = np.random.randn(self.__V, self.__H)
+        # self.__U = np.random.randn(self.__H, self.__V)
+        self.__W = np.random.uniform(-0.5, 0.5, (self.__V, self.__H))
+        self.__U = np.random.uniform(-0.5, 0.5,(self.__H, self.__V))
 
         for ep in range(self.__epochs):
             for i in tqdm(range(N)):
@@ -242,11 +244,11 @@ class Word2Vec(object):
                     gradient_focus = self.__U[:, idx] * \
                                        (self.sigmoid(np.dot(self.__U[:, idx], self.__W[focus_word]))-1)
 
-                    # update focus gradient sum
-                    focus_sum += gradient_focus
-
                     # update vector
                     self.__U[:, idx] -= self.__lr * gradient_context
+
+                    # update focus gradient sum
+                    focus_sum += gradient_focus
 
                     negs = self.negative_sampling(self.__nsample, i, idx)
                     for neg in negs:
@@ -255,11 +257,11 @@ class Word2Vec(object):
                         gradient_neg = self.__W[focus_word] * \
                                        (1 - self.sigmoid(np.dot((-1 * self.__U[:, neg_index]), self.__W[focus_word])))
 
-                        self.__U[:, idx] -= self.__lr * gradient_neg
-
                         gradient_focus_neg = self.__U[:, neg_index] * \
                                          (self.sigmoid(np.dot(self.__U[:, neg_index], self.__W[focus_word])))
 
+
+                        self.__U[:, idx] -= self.__lr * gradient_neg
                         focus_sum += gradient_focus_neg
 
                 self.__W[focus_word] -= self.__lr * focus_sum
@@ -295,29 +297,25 @@ class Word2Vec(object):
         """
         if not words:
             return [None]
-        print(words)
-        print(self.__w2i[words[0]])
-        print(len(self.__W))
         input = [self.__W[self.__w2i[word]] for word in words]
         if len(input) == 0:
             return [None]
 
         index_mapping = {}
-        samples = []
+        samples = self.__W
         idx = 0
-        for word in self.__vocab.keys():
-            samples.append(self.__W[self.__w2i[word]])
-            index_mapping[idx] = word
-            idx += 1
+        # for word in self.__W:
+        #     index_mapping[idx] = word
+        #     idx += 1
 
         # create scikit-learn classifier
-        net = NearestNeighbors(metric=metric, n_neighbors=k)
+        net = NearestNeighbors(metric=metric, n_neighbors=5)
         net.fit(samples)
 
         ret = []
         distances, indices = net.kneighbors(X=input, return_distance=True)
         for i in range(0, len(indices)):
-            ret.append([(index_mapping[indices[i][j]], distances[i][j]) for j in range(0, len(indices[i]))])
+            ret.append([(self.__i2w[indices[i][j]], distances[i][j]) for j in range(0, len(indices[i]))])
         return ret
 
 
