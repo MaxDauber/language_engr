@@ -55,7 +55,6 @@ class GRUCellV2(nn.Module):
 
         h_t = ((1 - input_gate) * new_gate) + (input_gate * h)
         # h_t = new_gate + input_gate * (h - new_gate)
-        print(np.shape(h_t))
         return h_t
 
 
@@ -89,28 +88,32 @@ class GRU2(nn.Module):
         :param      x:    a batch of sequences of dimensionality (B, T, D)
         :type       x:    torch.Tensor
         """
-        outputs = torch.randn([10,10])
-        h_fw = torch.randn([10,10])
 
-        if self.bidirectional:
-            return (outputs, h_fw, h_bw)
-        else:
+        outputs = []
+
+        hn = torch.zeros(x.size(0), self.hidden_size)
+        for seq in range(len(x[1])):
+            hn = self.fw(x[:, seq, :], hn)
+            outputs.append(hn)
+
+        h_fw = hn
+
+        if not self.bidirectional:
             return (outputs, h_fw)
+        else:
+            back_outputs = []
+            ht = torch.zeros(x.size(0), self.hidden_size)
+            for seq in range(len(x[1])-1, -1, -1):
+                ht = self.bw(x[:, seq, :], ht)
+                back_outputs.append(hn)
+
+            outputs = outputs + back_outputs
+
+            h_bw = ht
+            return (outputs, h_fw, h_bw)
 
 
-        # print()
-        #
-        # outs = []
-        #
-        # hn = h0[0, :, :]
-        #
-        # for seq in range(x.size(1)):
-        #     hn = self.gru_cell(x[:, seq, :], hn)
-        #     outs.append(hn)
-        #
-        # out = outs[-1].squeeze()
-        #
-        # out = self.fc(out)
+
 
 
 
