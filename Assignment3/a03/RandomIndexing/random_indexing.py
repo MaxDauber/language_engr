@@ -78,11 +78,13 @@ class RandomIndexing(object):
         array = line.split()
         ret = []
         for token in array:
+
             token = ''.join([ch for ch in list(token) if ch.isalpha()])
             if token != "":
                 ret.append(token)
         return " ".join(ret)
         # return [word for word in line if e.isalpha() or e == " "]
+
 
 
     ##
@@ -112,7 +114,7 @@ class RandomIndexing(object):
     ##             Goes through all the cleaned lines and adds each word of the
     ##             line to a vocabulary stored in a variable `self.__vocab`. The
     ##             words, stored in the vocabulary, should be unique.
-    ##             
+    ##
     ##             **Note**: this function is where the first pass through all files is made
     ##             (using the `text_gen` function)
     ##
@@ -137,15 +139,15 @@ class RandomIndexing(object):
 
     ##
     ## @brief      Creates word embeddings using Random Indexing.
-    ## 
+    ##
     ## The function stores the created word embeddings (or so called context vectors) in `self.__cv`.
     ## Random vectors used to create word embeddings are stored in `self.__rv`.
-    ## 
+    ##
     ## Context vectors are created by looping through each cleaned line and updating the context
     ## vectors following the Random Indexing approach, i.e. using the words in the sliding window.
     ## The size of the sliding window is governed by two instance variables `self.__lws` (left window size)
     ## and `self.__rws` (right window size).
-    ## 
+    ##
     ## For instance, let's consider a sentence:
     ##      I really like programming assignments.
     ## Let's assume that the left part of the sliding window has size 1 (`self.__lws` = 1) and the right
@@ -164,13 +166,13 @@ class RandomIndexing(object):
     ## \endverbatim
     ## where "^" denotes the word we're currently at, "l" denotes the words in the left part of the
     ## sliding window and "r" denotes the words in the right part of the sliding window.
-    ## 
+    ##
     ## Implementation tips:
     ## - make sure to understand how generators work! Refer to the documentation of a `text_gen` function
     ##   for more description.
     ## - the easiest way is to make `self.__cv` and `self.__rv` dictionaries with keys being words (as strings)
     ##   and values being the context vectors.
-    ## 
+    ##
     ## **Note**: this function is where the second pass through all files is made (using the `text_gen` function).
     ##         The first one was done when calling `build_vocabulary` function. This might not the most
     ##         efficient solution from the time perspective, but it's quite efficient from the memory
@@ -195,6 +197,7 @@ class RandomIndexing(object):
             with open(fname, encoding='utf8', errors='ignore') as f:
                 for line in f:
                     arr = self.clean_line(line).split()
+                    # arr = line.split()
 
                     for word_idx in range(len(arr)):
                         diff_vector = np.array([0 for i in range(self.__dim)])
@@ -399,10 +402,10 @@ if __name__ == '__main__':
                 f.write("{}\n".format("".join(part)))
     else:
         dir_name = "data"
-        # filenames = [os.path.join(dir_name, fn) for fn in os.listdir(dir_name)]
+        filenames = [os.path.join(dir_name, fn) for fn in os.listdir(dir_name)]
 
         # Use if only training on first book
-        filenames = ["data/Harry Potter 1 - Sorcerer's Stone.txt"]
+        #filenames = ["data/Harry Potter 1 - Sorcerer's Stone.txt"]
 
         ri = RandomIndexing(filenames)
         ri.train_and_persist()

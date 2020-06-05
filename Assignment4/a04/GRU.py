@@ -46,16 +46,15 @@ class GRUCellV2(nn.Module):
         g_input = torch.mm(x, self.w_ih.t()) + self.b_ih
         g_hidden = torch.mm(h, self.w_hh.t()) + self.b_hh
 
-        input_reset, input_input, input_new  = g_input.chunk(3, 1)
-        hidden_reset, hidden_input, hidden_new = g_hidden.chunk(3, 1)
+        input_reset, input_update, input_new  = g_input.chunk(3, 1)
+        hidden_reset, hidden_update, hidden_new = g_hidden.chunk(3, 1)
 
         reset_gate = torch.sigmoid(input_reset + hidden_reset)
-        input_gate = torch.sigmoid(input_input + hidden_input)
+        update_gate = torch.sigmoid(input_update + hidden_update)
         new_gate = torch.tanh(input_new + reset_gate * hidden_new)
 
-        h_t = ((1 - input_gate) * new_gate) + (input_gate * h)
-        # h_t = new_gate + input_gate * (h - new_gate)
-        return h_t
+        hidden_t = ((1 - update_gate) * new_gate) + (update_gate * h)
+        return hidden_t
 
 
 class GRU2(nn.Module):
@@ -91,25 +90,34 @@ class GRU2(nn.Module):
 
         outputs = []
 
-        hn = torch.zeros(x.size(0), self.hidden_size)
+        # set first hidden state and do forward pass
+        hidden_state_n = torch.zeros(x.size(0), self.hidden_size)
         for seq in range(len(x[1])):
-            hn = self.fw(x[:, seq, :], hn)
-            outputs.append(hn)
 
-        h_fw = hn
+            #element x_t has dimension BATCH X DIM (iterating across sequence)
+            hidden_state_n = self.fw(x[:, seq, :], hidden_state_n)
+            outputs.append(hidden_state_n)
+
+        # last hidden state of forward pass
+        h_fw = hidden_state_n
 
         if not self.bidirectional:
             return (outputs, h_fw)
         else:
             back_outputs = []
+
+            # set first hidden state and do backward pass
             ht = torch.zeros(x.size(0), self.hidden_size)
             for seq in range(len(x[1])-1, -1, -1):
                 ht = self.bw(x[:, seq, :], ht)
-                back_outputs.append(hn)
+                back_outputs.append(hidden_state_n)
 
+            # add output features from backward and forward passes
             outputs = outputs + back_outputs
 
+            # last hidden state of forward pass
             h_bw = ht
+
             return (outputs, h_fw, h_bw)
 
 

@@ -223,11 +223,9 @@ class Word2Vec(object):
 
         for ep in range(self.__epochs):
             for i in tqdm(range(N)):
-
                 focus_word = x[i]
                 context_vector = np.array(t[i])
-                # print(self.__i2w[focus_word])
-                # print([self.__i2w[word] for word in context_vector])
+
 
                 # add all to positive samples
                 for vec in context_vector:
@@ -235,22 +233,22 @@ class Word2Vec(object):
                 self.__pos_samples.add(self.__i2w[x[i]])
                 focus_sum = np.zeros((self.__H, ))
 
-                for idx in context_vector:
+                for index in context_vector:
                     #calculate gradient for context
                     gradient_context = self.__W[focus_word] * \
-                                       (self.sigmoid(np.dot(self.__U[:, idx], self.__W[focus_word]))-1)
+                                       (self.sigmoid(np.dot(self.__U[:, index], self.__W[focus_word]))-1)
 
                     #calculate gradient for focus
-                    gradient_focus = self.__U[:, idx] * \
-                                       (self.sigmoid(np.dot(self.__U[:, idx], self.__W[focus_word]))-1)
+                    gradient_focus = self.__U[:, index] * \
+                                       (self.sigmoid(np.dot(self.__U[:, index], self.__W[focus_word]))-1)
 
                     # update vector
-                    self.__U[:, idx] -= self.__lr * gradient_context
+                    self.__U[:, index] -= self.__lr * gradient_context
 
                     # update focus gradient sum
                     focus_sum += gradient_focus
 
-                    negs = self.negative_sampling(self.__nsample, i, idx)
+                    negs = self.negative_sampling(self.__nsample, i, index)
                     for neg in negs:
 
                         neg_index = self.__w2i[neg]
@@ -261,9 +259,8 @@ class Word2Vec(object):
                                          (self.sigmoid(np.dot(self.__U[:, neg_index], self.__W[focus_word])))
 
 
-                        self.__U[:, idx] -= self.__lr * gradient_neg
+                        self.__U[:, index] -= self.__lr * gradient_neg
                         focus_sum += gradient_focus_neg
-
                 self.__W[focus_word] -= self.__lr * focus_sum
                 self.__pos_samples.clear()
                 pass
